@@ -41,6 +41,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        globIgnores: ['**/NutriTrend.apk'],
+        navigateFallbackDenylist: [/^\/NutriTrend\.apk$/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/cl\.openfoodfacts\.org\/api\/v2\/.*/i,

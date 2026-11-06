@@ -45,14 +45,14 @@ export function MobileLayout({
             >
               ← Portada
             </button>
-            <button
-              type="button"
-              onClick={onInstallApp}
+            <a
+              href="/NutriTrend.apk"
+              download="NutriTrend.apk"
               className="px-3 py-1 rounded-lg bg-emerald-500 text-slate-950 font-extrabold text-[11px] flex items-center gap-1.5 active:scale-95 transition"
             >
               <Download className="w-3.5 h-3.5 stroke-[2.5px]" />
-              Instalar App en el Teléfono
-            </button>
+              Descargar APK Nativa
+            </a>
           </div>
         )}
 
