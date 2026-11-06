@@ -6,11 +6,15 @@ import {
   Minus,
   Check,
   Trash2,
-  Calendar
+  Calendar,
+  Flame,
+  Sparkles
 } from 'lucide-react';
 import { useWeightTrend } from '../../hooks/useWeightTrend';
 import { WeightChart } from './WeightChart';
 import { getLocalDateString, formatHumanDate } from '../../utils/dateUtils';
+import { calculateDynamicTDEE } from '../../utils/emaCalculator';
+import { nutritionService } from '../../services/nutritionService';
 
 /**
  * Algoritmo Interacción 3 (Paso 4) & RF-03:
@@ -72,6 +76,14 @@ export function WeightView() {
   };
 
   const reversedHistory = [...series].reverse();
+
+  // Fase 2 (Sección 7.1): Motor de Gasto Calórico Dinámico (TDEE Real de 14 días)
+  const { avgKcal } = nutritionService.getAverageCaloriesLast14Days();
+  const dynamicTdee = calculateDynamicTDEE({
+    avgIntakeKcal14d: avgKcal,
+    deltaEmaKg: stats.cambio14d ?? stats.cambio7d,
+    daysCount: stats.diasTramo14 || 14
+  });
 
   return (
     <div className="space-y-4">
@@ -139,6 +151,59 @@ export function WeightView() {
 
       {/* GRÁFICO RECHARTS: Puntos = Peso Real, Línea Esmeralda = EMA 7d */}
       <WeightChart series={series} />
+
+      {/* FASE 2 (Sección 7.1): MOTOR DE GASTO CALÓRICO DINÁMICO (TDEE REAL) */}
+      {dynamicTdee && (
+        <section className="bg-slate-900/90 border border-emerald-500/30 rounded-3xl p-4 space-y-3 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Flame className="w-4 h-4 text-emerald-400" />
+              <h2 className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                Motor TDEE Real (Algoritmo MacroFactor)
+              </h2>
+            </div>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 font-semibold flex items-center gap-1">
+              <Sparkles className="w-3 h-3" /> 14 días
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-2.5">
+              <span className="block text-[10px] text-slate-400 uppercase">Ingesta Media</span>
+              <span className="text-sm font-extrabold text-slate-100 tabular-nums">
+                {dynamicTdee.avgIntakeKcal} kcal
+              </span>
+            </div>
+            <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-2.5">
+              <span className="block text-[10px] text-slate-400 uppercase">Δ EMA (14d)</span>
+              <span className="text-sm font-extrabold text-sky-400 tabular-nums">
+                {dynamicTdee.deltaEmaKg > 0 ? `+${dynamicTdee.deltaEmaKg}` : dynamicTdee.deltaEmaKg} kg
+              </span>
+            </div>
+            <div className="bg-emerald-500/10 border border-emerald-500/40 rounded-2xl p-2.5">
+              <span className="block text-[10px] text-emerald-300 uppercase font-bold">TDEE Real</span>
+              <span className="text-base font-black text-emerald-400 tabular-nums">
+                {dynamicTdee.tdeeReal} kcal
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 pt-1 text-[11px] text-center">
+            <div className="rounded-xl bg-slate-950/60 border border-slate-800/80 py-1.5 px-2">
+              <span className="block text-slate-400">Déficit Sugerido</span>
+              <strong className="text-emerald-400 tabular-nums">{dynamicTdee.sugerencias.deficitModerado} kcal</strong>
+            </div>
+            <div className="rounded-xl bg-slate-950/60 border border-slate-800/80 py-1.5 px-2">
+              <span className="block text-slate-400">Mantenimiento</span>
+              <strong className="text-slate-200 tabular-nums">{dynamicTdee.sugerencias.mantenimiento} kcal</strong>
+            </div>
+            <div className="rounded-xl bg-slate-950/60 border border-slate-800/80 py-1.5 px-2">
+              <span className="block text-slate-400">Volumen Limpio</span>
+              <strong className="text-amber-400 tabular-nums">{dynamicTdee.sugerencias.superavitLimpio} kcal</strong>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* FORMULARIO DE REGISTRO / UPSERT MATUTINO (RNF-02) */}
       <form

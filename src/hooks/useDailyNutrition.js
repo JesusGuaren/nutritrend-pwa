@@ -30,6 +30,22 @@ export function useDailyNutrition() {
     setRegistrosHoy(snapshot.registrosHoy);
     setCombos(snapshot.combos);
 
+    // Fase 2 (Sección 7.4): Ciclado Automático de Macros por Calendario
+    const cycleConfig = nutritionService.getWeeklyCycleConfig();
+    if (cycleConfig?.enabled && cycleConfig?.days) {
+      const [y, m, d] = selectedDate.split('-').map(Number);
+      const dayOfWeek = new Date(y, m - 1, d).getDay();
+      const targetProfileName = cycleConfig.days[dayOfWeek];
+      const matchingMeta = snapshot.metas.find(
+        (meta) => meta.nombre_perfil === targetProfileName
+      );
+      if (matchingMeta && !matchingMeta.activo) {
+        nutritionService.setActiveMeta(matchingMeta.id).then((updatedMetas) => {
+          setMetas(updatedMetas);
+        });
+      }
+    }
+
     let isMounted = true;
     async function revalidateFromRemote() {
       setIsSyncing(true);

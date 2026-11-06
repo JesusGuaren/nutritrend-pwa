@@ -5,10 +5,12 @@ import {
   Check,
   Apple,
   Layers,
-  Target
+  Target,
+  Calendar
 } from 'lucide-react';
 import { ComboBuilder } from './ComboBuilder';
 import { BottomSheet } from '../../components/ui/BottomSheet';
+import { nutritionService } from '../../services/nutritionService';
 
 /**
  * Vista de Gestión de Catálogo de Alimentos, Combos y Perfiles de Metas Nutricionales.
@@ -28,6 +30,9 @@ export function CatalogView({
   const [isNewFoodOpen, setIsNewFoodOpen] = useState(false);
   const [searchFilter, setSearchFilter] = useState('');
   const [toastMsg, setToastMsg] = useState(null);
+  const [weeklyCycle, setWeeklyCycle] = useState(() =>
+    nutritionService.getWeeklyCycleConfig()
+  );
 
   const [foodForm, setFoodForm] = useState({
     nombre: '',
@@ -226,9 +231,91 @@ export function CatalogView({
         />
       )}
 
-      {/* PESTAÑA 3: PERFILES DE METAS NUTRICIONALES */}
+      {/* PESTAÑA 3: PERFILES DE METAS NUTRICIONALES + CICLADO POR CALENDARIO */}
       {subTab === 'metas' && (
         <div className="space-y-3">
+          {/* Fase 2 (Sección 7.4): Ciclado Automático de Macros por Calendario */}
+          <div className="bg-slate-900/90 border border-emerald-500/30 rounded-3xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-emerald-400" />
+                <div>
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-100">
+                    Ciclado Automático por Día
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Cambia automáticamente entre Entreno Pesado y Déficit según el día
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const next = { ...weeklyCycle, enabled: !weeklyCycle.enabled };
+                  setWeeklyCycle(next);
+                  nutritionService.saveWeeklyCycleConfig(next);
+                  triggerToast(
+                    next.enabled
+                      ? 'Ciclado automático activado'
+                      : 'Ciclado automático desactivado'
+                  );
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition ${
+                  weeklyCycle.enabled
+                    ? 'bg-emerald-500 text-slate-950'
+                    : 'bg-slate-800 text-slate-400'
+                }`}
+              >
+                {weeklyCycle.enabled ? 'ACTIVO' : 'INACTIVO'}
+              </button>
+            </div>
+
+            {weeklyCycle.enabled && (
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80">
+                {[
+                  { day: 1, name: 'Lunes' },
+                  { day: 2, name: 'Martes' },
+                  { day: 3, name: 'Miércoles' },
+                  { day: 4, name: 'Jueves' },
+                  { day: 5, name: 'Viernes' },
+                  { day: 6, name: 'Sábado' },
+                  { day: 0, name: 'Domingo' }
+                ].map(({ day, name }) => (
+                  <div
+                    key={day}
+                    className="bg-slate-950 border border-slate-800 rounded-xl p-2 flex flex-col gap-1"
+                  >
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">
+                      {name}
+                    </span>
+                    <select
+                      value={weeklyCycle.days?.[day] || 'Déficit'}
+                      onChange={(e) => {
+                        const next = {
+                          ...weeklyCycle,
+                          days: {
+                            ...weeklyCycle.days,
+                            [day]: e.target.value
+                          }
+                        };
+                        setWeeklyCycle(next);
+                        nutritionService.saveWeeklyCycleConfig(next);
+                      }}
+                      className="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-xs font-bold text-emerald-400 focus:outline-none"
+                    >
+                      {metas.map((m) => (
+                        <option key={m.id} value={m.nombre_perfil}>
+                          {m.nombre_perfil}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {metas.map((meta) => (
             <MetaProfileCard
               key={meta.id}
