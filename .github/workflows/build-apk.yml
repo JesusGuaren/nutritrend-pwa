@@ -39,6 +39,10 @@ jobs:
           fi
           npx cap sync android
 
+      - name: Generate Native Android Icons (Adaptive & Legacy Mipmaps) from NutriTrend Logo
+        run: |
+          npx --yes @capacitor/assets generate --android --iconBackgroundColor '#020617' --iconBackgroundColorDark '#020617'
+
       - name: Inject Camera & Vibrate Permissions into AndroidManifest.xml
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
@@ -63,8 +67,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.0-apk
-          name: "NutriTrend Android APK (Instalador Nativo)"
-          body: "Descarga directa del archivo instalable `NutriTrend.apk` para Android."
+          name: "NutriTrend Android APK (Instalador Nativo con Ícono Oficial)"
+          body: "Descarga directa del archivo instalable `NutriTrend.apk` para Android con ícono nativo oficial."
           files: NutriTrend.apk
           prerelease: false
         env:
