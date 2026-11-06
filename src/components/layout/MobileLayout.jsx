@@ -1,11 +1,20 @@
-import React from 'react';
-import { Flame, Scale, Layers } from 'lucide-react';
+import React, { useState } from 'react';
+import { Flame, Scale, Layers, Download } from 'lucide-react';
 
 /**
  * Contenedor Mobile-First (max-w-md mx-auto min-h-screen) + Bottom Navigation fija (h-16)
  * con diseño para el pulgar (RNF-01) y tema oscuro OLED (bg-slate-950 text-slate-100).
  */
-export function MobileLayout({ activeTab, onChangeTab, isSyncing, children }) {
+export function MobileLayout({
+  activeTab,
+  onChangeTab,
+  isSyncing,
+  isEmbeddedPreview = false,
+  showInstallBanner = false,
+  onInstallApp,
+  onBackToShowcase,
+  children
+}) {
   const navItems = [
     { id: 'dashboard', label: 'Hoy', icon: Flame },
     { id: 'weight', label: 'Peso EMA', icon: Scale },
@@ -13,12 +22,37 @@ export function MobileLayout({ activeTab, onChangeTab, isSyncing, children }) {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex justify-center">
-      <div className="w-full max-w-md min-h-screen bg-slate-950 flex flex-col relative border-x border-slate-900/80 shadow-2xl">
+    <div className={`${isEmbeddedPreview ? 'min-h-full' : 'min-h-screen'} bg-slate-950 text-slate-100 flex justify-center`}>
+      <div
+        className={`w-full max-w-md ${
+          isEmbeddedPreview ? 'min-h-[680px]' : 'min-h-screen'
+        } bg-slate-950 flex flex-col relative border-x border-slate-900/80 shadow-2xl`}
+      >
         {/* Indicador sutil superior de sincronización Stale-While-Revalidate */}
         {isSyncing && (
           <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-md h-0.5 bg-emerald-500/30 overflow-hidden z-50">
             <div className="h-full w-1/3 bg-emerald-400 animate-pulse" />
+          </div>
+        )}
+
+        {/* Banner superior de descarga rápida si el usuario entró en modo web pero aún no la instala */}
+        {showInstallBanner && !isEmbeddedPreview && (
+          <div className="bg-emerald-500/10 border-b border-emerald-500/30 px-3.5 py-2 flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={onBackToShowcase}
+              className="text-[11px] font-semibold text-slate-300 hover:text-white underline"
+            >
+              ← Portada
+            </button>
+            <button
+              type="button"
+              onClick={onInstallApp}
+              className="px-3 py-1 rounded-lg bg-emerald-500 text-slate-950 font-extrabold text-[11px] flex items-center gap-1.5 active:scale-95 transition"
+            >
+              <Download className="w-3.5 h-3.5 stroke-[2.5px]" />
+              Instalar App en el Teléfono
+            </button>
           </div>
         )}
 
@@ -30,7 +64,9 @@ export function MobileLayout({ activeTab, onChangeTab, isSyncing, children }) {
         {/* RNF-01: Barra de navegación fija abajo (h-16) */}
         <nav
           aria-label="Navegación principal"
-          className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md h-16 bg-slate-900/95 backdrop-blur-md border-t border-slate-800/80 z-40 px-2 flex items-center justify-around"
+          className={`${
+            isEmbeddedPreview ? 'sticky bottom-0 w-full' : 'fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md'
+          } h-16 bg-slate-900/95 backdrop-blur-md border-t border-slate-800/80 z-40 px-2 flex items-center justify-around`}
         >
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -56,4 +92,3 @@ export function MobileLayout({ activeTab, onChangeTab, isSyncing, children }) {
     </div>
   );
 }
-
