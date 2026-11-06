@@ -1,9 +1,7 @@
 /**
- * RF-03: Algoritmo de Peso Tendencial EMA de 7 Días (Exponential Moving Average)
- * Dada una lista de registros de peso ordenada por fecha ascendente P = [p_0, p_1, ..., p_n]:
- * - Constante de suavizado (N = 7): k = 2 / (7 + 1) = 0.25
- * - Para i = 0: EMA_0 = p_0.peso_kg
- * - Para i > 0: EMA_i = Number(((p_i.peso_kg * 0.25) + (EMA_{i-1} * 0.75)).toFixed(2))
+ * RF-03 & Fase 2 (Sección 7.1):
+ * Algoritmo de Peso Tendencial EMA de 7 Días (Exponential Moving Average)
+ * y Motor de Gasto Calórico Dinámico (TDEE Real de 14 días).
  */
 
 export function calculateWeightTrendEMA(registros = []) {
@@ -14,6 +12,7 @@ export function calculateWeightTrendEMA(registros = []) {
         pesoHoy: null,
         emaActual: null,
         cambio7d: 0,
+        cambio14d: 0,
         tendenciaEstado: 'Sin datos',
         kcalEquivalenteSemanal: 0
       }
@@ -48,11 +47,14 @@ export function calculateWeightTrendEMA(registros = []) {
   }
 
   const ultimo = series[series.length - 1];
-  // Índice de hace 7 registros o el primero disponible si hay menos de 7
-  const refIndex = Math.max(0, series.length - 1 - 7);
-  const referencia7d = series[refIndex];
+  const refIndex7d = Math.max(0, series.length - 1 - 7);
+  const refIndex14d = Math.max(0, series.length - 1 - 14);
+  const referencia7d = series[refIndex7d];
+  const referencia14d = series[refIndex14d];
 
   const cambio7d = Number((ultimo.ema_kg - referencia7d.ema_kg).toFixed(2));
+  const cambio14d = Number((ultimo.ema_kg - referencia14d.ema_kg).toFixed(2));
+  const diasTramo14 = Math.max(1, series.length - 1 - refIndex14d);
 
   let tendenciaEstado = 'Manteniendo';
   if (cambio7d < -0.05) {
@@ -61,7 +63,6 @@ export function calculateWeightTrendEMA(registros = []) {
     tendenciaEstado = 'Subiendo';
   }
 
-  // Preparación Fase 2 (Sección 7.1): Delta EMA * 7700 kcal
   const kcalEquivalenteSemanal = Math.round(cambio7d * 7700);
 
   return {
@@ -71,7 +72,10 @@ export function calculateWeightTrendEMA(registros = []) {
       fechaUltimo: ultimo.fecha,
       emaActual: ultimo.ema_kg,
       emaReferencia7d: referencia7d.ema_kg,
+      emaReferencia14d: referencia14d.ema_kg,
       cambio7d,
+      cambio14d,
+      diasTramo14,
       tendenciaEstado,
       kcalEquivalenteSemanal
     }
@@ -79,12 +83,37 @@ export function calculateWeightTrendEMA(registros = []) {
 }
 
 /**
- * Preparación Arquitectónica Fase 2 (Sección 7.1):
- * Motor de Gasto Calórico Dinámico (TDEE Real) cruzando ingesta media de 14 días con Delta EMA.
+ * Fase 2 (Sección 7.1): Motor de Gasto Calórico Dinámico (TDEE Real)
+ * Cruza la ingesta calórica media de los últimos 14 días con el delta del Peso Tendencial EMA
+ * (Delta EMA * 7700 kcal) para calcular el mantenimiento metabólico real del usuario
+ * y sugerir ajustes de calorías automáticos.
  */
-export function estimateDynamicTDEE(ingestaMediaDiariaKcal, deltaEma14DiasKg) {
-  if (!ingestaMediaDiariaKcal || typeof deltaEma14DiasKg !== 'number') return null;
-  const balanceEnergeticoDiario = (deltaEma14DiasKg * 7700) / 14;
-  return Math.round(ingestaMediaDiariaKcal - balanceEnergeticoDiario);
-}
+export function calculateDynamicTDEE({
+  avgIntakeKcal14d,
+  deltaEmaKg,
+  daysCount = 14
+}) {
+  const safeDays = Math.max(1, Number(daysCount) || 14);
+  const intake = Number(avgIntakeKcal14d) || 0;
+  const deltaKg = Number(deltaEmaKg) || 0;
 
+  if (intake <= 0) {
+    return null;
+  }
+
+  // Delta energético diario = (Delta_EMA_kg * 7700 kcal) / días
+  const dailyEnergyDelta = Math.round((deltaKg * 7700) / safeDays);
+  const tdeeReal = Math.round(intake - dailyEnergyDelta);
+
+  return {
+    avgIntakeKcal: Math.round(intake),
+    deltaEmaKg: Number(deltaKg.toFixed(2)),
+    dailyEnergyDelta,
+    tdeeReal,
+    sugerencias: {
+      deficitModerado: Math.max(1200, Math.round(tdeeReal - 450)),
+      mantenimiento: Math.round(tdeeReal),
+      superavitLimpio: Math.round(tdeeReal + 250)
+    }
+  };
+}

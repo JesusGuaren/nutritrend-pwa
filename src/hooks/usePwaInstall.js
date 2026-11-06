@@ -9,7 +9,12 @@ export function usePwaInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isStandalone, setIsStandalone] = useState(() => {
     if (typeof window === 'undefined') return false;
+    const isCapacitorNative =
+      Boolean(window.Capacitor?.isNativePlatform?.()) ||
+      window.location.protocol === 'capacitor:' ||
+      window.navigator.userAgent.includes('Capacitor');
     return (
+      isCapacitorNative ||
       window.matchMedia('(display-mode: standalone)').matches ||
       window.navigator.standalone === true
     );
@@ -80,3 +85,4 @@ export function usePwaInstall() {
     triggerInstall
   };
 }
+

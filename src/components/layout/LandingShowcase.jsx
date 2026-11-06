@@ -31,8 +31,10 @@ export function LandingShowcase({
   const [installModalOpen, setInstallModalOpen] = useState(false);
   const currentUrl =
     typeof window !== 'undefined' ? window.location.origin : 'https://nutritrend-pwa.vercel.app';
+  const apkDirectDownloadUrl =
+    'https://github.com/JesusGuaren/nutritrend-pwa/releases/download/v1.0.0-apk/NutriTrend.apk';
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&color=10b981&bgcolor=020617&data=${encodeURIComponent(
-    currentUrl
+    apkDirectDownloadUrl
   )}`;
 
   const handleDownloadButton = async () => {
@@ -67,14 +69,14 @@ export function LandingShowcase({
         </div>
 
         <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={handleDownloadButton}
+          <a
+            href={apkDirectDownloadUrl}
+            download="NutriTrend.apk"
             className="min-h-[42px] px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition"
           >
             <Download className="w-4 h-4 stroke-[2.5px]" />
-            <span>Descargar App</span>
-          </button>
+            <span>Descargar APK (Android)</span>
+          </a>
         </div>
       </header>
 
@@ -99,33 +101,33 @@ export function LandingShowcase({
             Diseñada específicamente para operarse con el pulgar desde tu teléfono. Escanea códigos de barras chilenos (EAN-13) con la cámara, registra tus comidas frecuentes en 1 toque y filtra la retención de líquidos con la Media Móvil Exponencial de 7 días estilo MacroFactor.
           </p>
 
-          {/* TARJETA PRINCIPAL DE DESCARGA DIRECTA */}
+          {/* TARJETA PRINCIPAL DE DESCARGA DIRECTA NATIVA (APK) */}
           <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xl">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
                   <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-400">
-                    Instalador Web Directo (PWA)
+                    Instalador Nativo Android (.APK)
                   </span>
                 </div>
                 <h2 className="text-lg font-extrabold text-slate-100">
-                  Instala NutriTrend en tu teléfono
+                  Descarga e instala NutriTrend.apk
                 </h2>
                 <p className="text-xs text-slate-400">
-                  Peso: ~350 KB · Funciona Offline · Cámara EAN activa · Pantalla completa OLED
+                  Aplicación nativa compilada con Capacitor · Permisos nativos de cámara EAN · Funciona 100% Offline
                 </p>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-2.5 shrink-0">
-                <button
-                  type="button"
-                  onClick={handleDownloadButton}
+                <a
+                  href={apkDirectDownloadUrl}
+                  download="NutriTrend.apk"
                   className="min-h-[54px] px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-black text-sm flex items-center justify-center gap-2.5 shadow-xl shadow-emerald-500/25 transition"
                 >
                   <Download className="w-5 h-5 stroke-[2.5px]" />
-                  <span>{canInstallNatively ? 'Instalar App Ahora' : 'Descargar en mi Celular'}</span>
-                </button>
+                  <span>Descargar APK Nativa</span>
+                </a>
 
                 <button
                   type="button"
@@ -138,21 +140,20 @@ export function LandingShowcase({
               </div>
             </div>
 
-            {/* Código QR visible en pantallas de PC para escanear con el teléfono */}
+            {/* Código QR visible en pantallas de PC para descargar el APK directo al teléfono */}
             <div className="hidden sm:flex items-center gap-4 pt-4 border-t border-slate-800/80">
               <img
                 src={qrImageUrl}
-                alt="Código QR para abrir en el celular"
+                alt="Código QR para descargar NutriTrend.apk"
                 className="w-20 h-20 rounded-xl border border-slate-800 bg-slate-950 p-1 shrink-0"
               />
               <div className="space-y-1">
                 <div className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
                   <Smartphone className="w-4 h-4 text-emerald-400" />
-                  ¿Estás viendo esto desde tu PC?
+                  Escanea el QR con tu celular para bajar el archivo <code className="text-emerald-400">NutriTrend.apk</code>
                 </div>
                 <p className="text-xs text-slate-400">
-                  Apunta con la cámara de tu celular a este código QR para abrir la página en tu teléfono y presionar{' '}
-                  <strong className="text-emerald-400">“Descargar en mi Celular”</strong>.
+                  Al escanearlo desde tu teléfono Android comenzará de inmediato la descarga del instalador nativo <strong className="text-emerald-400">NutriTrend.apk</strong>.
                 </p>
               </div>
             </div>
@@ -300,3 +301,4 @@ export function LandingShowcase({
     </div>
   );
 }
+

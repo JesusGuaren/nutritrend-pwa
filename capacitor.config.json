@@ -1,0 +1,9 @@
+{
+  "appId": "com.jesusproductions.nutritrend",
+  "appName": "NutriTrend",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}

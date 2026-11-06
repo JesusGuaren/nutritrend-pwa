@@ -4,7 +4,8 @@ const STORAGE_KEYS = {
   METAS: 'nutritrend_metas_v1',
   ALIMENTOS: 'nutritrend_alimentos_v1',
   REGISTROS: 'nutritrend_registros_v1',
-  COMBOS: 'nutritrend_combos_v1'
+  COMBOS: 'nutritrend_combos_v1',
+  WEEKLY_CYCLE: 'nutritrend_weekly_cycle_v1'
 };
 
 const SEED_METAS = [
@@ -522,6 +523,63 @@ export const nutritionService = {
     }
 
     return updated;
+  },
+
+  /**
+   * Fase 2 (Sección 7.1): Obtiene la ingesta calórica media de los últimos 14 días
+   * registrados para cruzarla con el Delta EMA y calcular el TDEE Real.
+   */
+  getAverageCaloriesLast14Days() {
+    const alimentos = readLocal(STORAGE_KEYS.ALIMENTOS, SEED_ALIMENTOS);
+    const foodMap = new Map(alimentos.map((f) => [f.id, f]));
+    const allLogs = readLocal(STORAGE_KEYS.REGISTROS, []);
+
+    const byDate = new Map();
+    for (const log of allLogs) {
+      const food = log.alimentos || foodMap.get(log.alimento_id);
+      if (!food) continue;
+      const kcal = Math.round(((Number(food.kcal_100g) || 0) * (Number(log.gramos) || 0)) / 100);
+      byDate.set(log.fecha, (byDate.get(log.fecha) || 0) + kcal);
+    }
+
+    const dates = Array.from(byDate.keys()).sort((a, b) => b.localeCompare(a)).slice(0, 14);
+    if (dates.length === 0) {
+      const metas = readLocal(STORAGE_KEYS.METAS, SEED_METAS);
+      const active = metas.find((m) => m.activo) || metas[0];
+      return {
+        avgKcal: Number(active?.kcal_objetivo) || 2150,
+        loggedDaysCount: 0
+      };
+    }
+
+    const totalKcal = dates.reduce((sum, d) => sum + (byDate.get(d) || 0), 0);
+    return {
+      avgKcal: Math.round(totalKcal / dates.length),
+      loggedDaysCount: dates.length
+    };
+  },
+
+  /**
+   * Fase 2 (Sección 7.4): Ciclado Automático de Macros por Calendario (Lunes=1 ... Domingo=0)
+   */
+  getWeeklyCycleConfig() {
+    return readLocal(STORAGE_KEYS.WEEKLY_CYCLE, {
+      enabled: false,
+      days: {
+        1: 'Entreno Pesado',
+        2: 'Déficit',
+        3: 'Entreno Pesado',
+        4: 'Déficit',
+        5: 'Entreno Pesado',
+        6: 'Mantenimiento',
+        0: 'Déficit'
+      }
+    });
+  },
+
+  saveWeeklyCycleConfig(config) {
+    writeLocal(STORAGE_KEYS.WEEKLY_CYCLE, config);
+    return config;
   }
 };
 
