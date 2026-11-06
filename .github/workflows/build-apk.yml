@@ -27,9 +27,6 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Install dependencies & Build Web Bundle
         run: |
           npm install
@@ -42,7 +39,7 @@ jobs:
           fi
           npx cap sync android
 
-      - name: Inject Camera & Internet Permissions into AndroidManifest.xml
+      - name: Inject Camera & Vibrate Permissions into AndroidManifest.xml
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           if ! grep -q "android.permission.CAMERA" "$MANIFEST"; then
@@ -53,7 +50,7 @@ jobs:
         working-directory: ./android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
           cp app/build/outputs/apk/debug/app-debug.apk ../NutriTrend.apk
 
       - name: Upload APK as GitHub Artifact
